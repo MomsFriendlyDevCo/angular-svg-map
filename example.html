@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>angular-svg-map</title>
+
+	<!-- Angular core -->
+	<script src="bower_components/jquery/dist/jquery.min.js"></script>
+	<script src="bower_components/angular/angular.min.js"></script>
+
+	<script src="bower_components/lodash/lodash.min.js"/>
+	<script src="bower_components/d3/d3.min.js"/>
+
+	<!-- Demo setup -->
+	<script src="app.js"></script>
+</head>
+<script>
+var app = angular.module('app', []);
+
+app.directive('svgMap', function() {
+	return {
+		scope: {
+			svgMap: '='
+		},
+		restrict: 'AE',
+		template: 
+			'I am a Map. I am aware of {{svgMap.length}} regions',
+		controller: function($scope) {
+			// TEMPORARY HACK TO MAKE 'US' GO READ {{{
+			$scope.$watch('svgMap', function() {
+				if (!$scope.svgMap) return; // No data yet
+
+				// Map changed. Color US in red
+				var us = _.find($scope.svgMap, {code: 'US'});
+				us.fill = 'red';
+			});
+			//
+
+			$scope.$watch('svgMap', function() {
+				// FIXME: Presumably some setup code for D3 should go here
+			});
+		},
+		link: function($scope, elem, attr, ctrl) {
+		}
+	}
+});
+
+app.controller('demoController', function($scope, $http) {
+	$scope.map = null;
+	$http.get('data/world.json')
+		.success(function(data) {
+			$scope.map = data;
+		});
+});
+</script>
+
+<body ng-app="app">
+	<div ng-controller="demoController">
+		<div class="container">
+			<div svg-map="map"></div>
+		</div>
+	</div>
+</body>
