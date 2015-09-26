@@ -19,7 +19,7 @@ app.controller('demoController', function($scope, $http, collectionAssistant, $t
 		},
 	};
 
-	$http.get('data/world.json').success(function(data) {
+	$http.get('../data/world.json').success(function(data) {
 		// Let's load the world's map ...
 		$scope.mapRegions = data;
 	});
