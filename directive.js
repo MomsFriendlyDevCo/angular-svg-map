@@ -2,11 +2,11 @@ app.directive('svgMap', function() {
 	return {
 		scope: {
 			regions: '=', // Array or regions (see $scope.drawRegion for details of region structure)
-            config: '='   // Configuration settings object (see $scope.defaults for details)
+			config: '='   // Configuration settings object (see $scope.defaults for details)
 		},
 		restrict: 'AE',
 		template: // {{{
-			'<svg id=canvas>' +
+			'<svg id="canvas">' +
 			'	<defs>' +
 			'		<pattern id="smallGrid" ng-attr-width="{{ config.grid.small }}" ng-attr-height="{{ config.grid.small }}" patternUnits="userSpaceOnUse">' +
 			'			<path ng-attr-d="M {{ config.grid.small	}} 0 L 0 0 0 {{ config.grid.small }}" fill="none" stroke="gray" stroke-width="0.5"/>' +
@@ -21,73 +21,74 @@ app.directive('svgMap', function() {
 			$scope.regions = []; // Array of regions
 
 			// Configuration {{{
-	 		if (!$scope.config)
-                $scope.config = {};
+	 		if (!$scope.config) $scope.config = {};
 
 			// Default settings
-            $scope.defaults = {
+			$scope.defaults = {
 				map: { // Map dimensions
 					height: 500,
 					width: 1000
 				},
-				// Zoom parameters
-                zoom: {
-                    min: 1,		// Minimal zoom
-                    max: 10,	// Maximal zoom
-                    step: 0.2	// Zoom step
-                },
+
+				zoom: {
+					min: 1, // Minimal zoom
+					max: 10, // Maximal zoom
+					step: 0.2, // Zoom step
+				},
+
 				// Common configurations per map region. Over-ridden by
 				// same setting in regions (if provided)
 				region: {
 					stroke: 'black', // colour
-					width: 1,		 // stroke width
-					fill: null,		 // fill colour
-					scale: 1		 // scale factor
+					width: 1, // stroke width
+					fill: null, // fill colour
+					scale: 1, // scale factor
 				},
-				// Grid style
+
 				grid: {
 					small: 10,
-					large: 100
+					large: 100,
 				},
-				// Style of a map contour
-				contour: {
-					stroke: 'black',	// stroke colour
-					width: 4,			// stroke width
-					fill: 'none',		// fill colour
-					dasharray: ""		//
+				
+				contour: { // Style of a map contour
+					stroke: 'black', // stroke colour
+					width: 4, // stroke width
+					fill: 'none', // fill colour
+					dasharray: "",
 				},
-				// Styles for map background
-				background: {
-					grid: true,			// Draw (or do not draw grid)
-					color: '#DCDCDC'	// Background colour
+
+				
+				background: { // Styles for map background
+					grid: true, // Draw (or do not draw grid)
+					color: '#DCDCDC', // Background colour
 				},
-				// Mouse event callbacks
-				events: {
+				
+				events: { // Mouse event callbacks
 					click: null,
 					dblclick: null,
 					mouseup: null,
 					mousedown: null,
 					mousemove: null,
 					mouseout: null,
-					mouseover: null
+					mouseover: null,
 				}
-            };
+			};
 
 			// Settings that should not be overridden by user configuration
 			$scope.hardDefaults = {
 				zoom: {
-					min: 1
+					min: 1,
 				}
 			}
 
 			// Apply user-specified settings
-             _.defaultsDeep($scope.config, $scope.defaults);
-			 _.merge($scope.config, $scope.hardDefaults);
-			 // }}}
+			_.defaultsDeep($scope.config, $scope.defaults);
+			_.merge($scope.config, $scope.hardDefaults);
+			// }}}
 
-			 // Config shortcuts {{{
+			// Config shortcuts {{{
 			$scope.map = $scope.config.map;
-			 // }}}
+			// }}}
 
 			// Utils {{{
 			/** Generate random RGB colour */
@@ -119,18 +120,18 @@ app.directive('svgMap', function() {
 			// }}}
 
 			// SVG canvas {{{
-            $scope.svg = Snap("#canvas") // Main SVG canvas
-                .attr({
-                    height: $scope.map.height,
-                    width: $scope.map.width,
-                })
+			$scope.svg = Snap("#canvas") // Main SVG canvas
+				.attr({
+					height: $scope.map.height,
+					width: $scope.map.width,
+				})
 
 			// Main layer (a group under canvas)
-            $scope.layer = $scope.svg.group().attr('id', 'layer')
+			$scope.layer = $scope.svg.group().attr('id', 'layer')
 			$scope.layer.transform(Snap.matrix());
 
 			// Contour styles
-            $scope.contour = $scope.svg
+			$scope.contour = $scope.svg
 				.rect(0, 0, $scope.map.width, $scope.map.height)
 				.attr('fill', $scope.config.contour.fill)
 				.attr('stroke', $scope.config.contour.stroke)
@@ -139,7 +140,7 @@ app.directive('svgMap', function() {
 				.attr('id', 'contour')
 
 			// Background colour
-            $scope.backgroundColor = $scope.svg
+			$scope.backgroundColor = $scope.svg
 				.rect(0, 0, $scope.map.width, $scope.map.height)
 				.attr('fill', $scope.config.background.color)
 				.attr('id', 'backgroundColor')
@@ -164,7 +165,7 @@ app.directive('svgMap', function() {
 			 *     classed: <CSS classes>
 			 * }
 			*/
-            $scope.drawRegion = function(region, oldRegion) {
+			$scope.drawRegion = function(region, oldRegion) {
 				var path = null,
 					pathId = region.code + '-path';
 				if (!oldRegion) {
@@ -193,7 +194,7 @@ app.directive('svgMap', function() {
 					if (region.classed)
 						path.addClass(region.classed);
 				}
-            }
+			}
 
 			/** Remove a region from a map */
 			$scope.eraseRegion = function(region) {
@@ -240,22 +241,22 @@ app.directive('svgMap', function() {
 			}
 
 			/** Zoom layer. Bound to scroll events */
-            $scope.zoom = function(e) {
+			$scope.zoom = function(e) {
 				// Layer's bounding box before transformations
 				var origBox = $scope.getBBox($scope.layer);
 
 				// Zoom configuration shortcuts
-                var step = $scope.config.zoom.step,
-                    min = $scope.config.zoom.min,
-                    max = $scope.config.zoom.max;
+				var step = $scope.config.zoom.step;
+				var min = $scope.config.zoom.min;
+				var max = $scope.config.zoom.max;
 
 				// Current scale factor
 				var scale = $scope.layer.matrix.a;
 
 				// New scale factor
-                scale += (e.wheelDelta > 0) ? step : - step;
-                scale = (scale > max) ? max :
-                   (scale < min) ? min : scale
+				scale += (e.wheelDelta > 0) ? step : - step;
+				scale = (scale > max) ? max :
+					(scale < min) ? min : scale
 
 				// Transform layer applying new scale factor
 				$scope.scale([e.x, e.y], scale, $scope.layer)
@@ -276,11 +277,11 @@ app.directive('svgMap', function() {
 					matrix.f += origBox.y2 - box.y2;
 
 				$scope.layer.transform(matrix)
-            }
+			}
 
 			// Setup scroll event listeners
 			$scope.svg.node.addEventListener('mousewheel', $scope.zoom);
-            $scope.svg.node.addEventListener('DOMMouseScroll', $scope.zoom);
+			$scope.svg.node.addEventListener('DOMMouseScroll', $scope.zoom);
 			// }}}
 
 			// Layer pan {{{
