@@ -19,10 +19,9 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			'	</defs>' +
 			'</svg>', // }}}
 		controller: function($scope, collectionAssistant) {
-			$scope.regions = []; // Array of regions
-
 			// Configuration {{{
 	 		if (!$scope.config) $scope.config = {};
+			if (!$scope.regions) $scope.regions = [];
 
 			// Default settings
 			$scope.defaults = {
@@ -161,7 +160,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			 *     code: <unique id>
 			 *     path: <SVG path specification>
 			 *     fill: <CSS fill colour specification>
-			 *     stroke: <stroke (conour) width>
+			 *     stroke: <stroke (contour) width>
 			 *     scale: <scale factor>
 			 *     classed: <CSS classes>
 			 * }
@@ -343,15 +342,15 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			// }}}
 
 			// Watchers {{{
-			$scope.regionWatcherPrevious = null;
+			$scope.regionsLoading = true;
 			$scope.$watch('regions', function(newV, oldV) {
-				var ca = collectionAssistant(newV, oldV)
+				collectionAssistant(newV, $scope.regionsLoading ? [] : oldV)
 					.indexBy('code')
 					.deepComparison()
 					.on('new', $scope.drawRegion)
 					.on('deleted', $scope.eraseRegion)
 					.on('update', $scope.drawRegion);
-				$scope.regionWatcherPrevious = newV;
+				$scope.regionsLoading = false;
 			}, true)
 			// }}}
 		}
