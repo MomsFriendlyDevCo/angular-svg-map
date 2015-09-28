@@ -1,4 +1,4 @@
-angular.module('angular-svg-map', [])
+angular.module('angular-svg-map', ['ng-collection-assistant'])
 .directive('svgMap', function() {
 	return {
 		scope: {
