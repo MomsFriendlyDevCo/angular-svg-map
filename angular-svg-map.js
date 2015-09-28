@@ -1,4 +1,5 @@
-app.directive('svgMap', function() {
+angular.module('angular-svg-map', [])
+.directive('svgMap', function() {
 	return {
 		scope: {
 			regions: '=', // Array or regions (see $scope.drawRegion for details of region structure)
