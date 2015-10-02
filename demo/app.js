@@ -1,5 +1,5 @@
 var app = angular.module('app', [
-	'ng-collection-assistant'
+	'angular-svg-map'
 ]);
 
 app.controller('demoController', function($scope, $http, collectionAssistant, $timeout) {
