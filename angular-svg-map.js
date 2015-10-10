@@ -156,6 +156,11 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				$scope.layer.append($scope.backgroundGrid);
 			}
 
+			$scope.elements = $scope.svg
+				.group()
+				.attr({id: 'elements'})
+			$scope.layer.append($scope.elements);
+
 			/** Draw or redraw a region on a map
 			 * {
 			 *     code: <unique id>
@@ -180,7 +185,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 						.attr('id',region.code)
 						.transform('scale(' + $scope.config.region.scale + ')')
 						.append(path)
-						$scope.layer.append(group);
+						$scope.elements.append(group);
 				} else
 					path = Snap('#' + pathId);
 
@@ -272,7 +277,6 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 					(point[1] - unscaled[1]*factor)/factor
 				];
 
-
 				// Create transform string
 				var transform = d3transform()
 					.scale(factor)
@@ -302,7 +306,6 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 
 				// Transform layer applying new scale factor
 				$scope.scale([e.x, e.y], scale, $scope.layer)
-
 
 				var box = $scope.layer.getBBox();
 				var matrix = $scope.layer.matrix;
@@ -383,17 +386,41 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			$scope.setLayerEventCallback('mouseover');
 			// }}}
 
-			// Watchers {{{
-			$scope.regionsLoading = true;
-			$scope.$watch('regions', function(newV, oldV) {
-				collectionAssistant(newV, $scope.regionsLoading ? [] : oldV)
-					.indexBy('code')
-					.deepComparison()
-					.on('new', $scope.drawRegion)
-					.on('deleted', $scope.eraseRegion)
-					.on('update', $scope.drawRegion);
-				$scope.regionsLoading = false;
-			}, true)
+            /** Map to fit top-level container */
+            $scope.upscaleMap = function() {
+                var bbox = $scope.elements.getBBox();
+                var scaleFactor = $scope.config.map.width/bbox.w;
+                $scope.scale([0, 0], scaleFactor, $scope.elements);
+            }
+
+            // Watchers {{{
+            var unregister = $scope.$watchCollection('regions', function(regions) {
+                // Assume that the initial load of regions is atomic (well, ish)
+                // Also, assume that regions come as an array of paths, that is,
+                // draw will be synchronous, otherwise draw need to return some notion
+                // of draw being completed. This is required to "upscale" the map
+                // to fit the top-level container
+                if (regions.length) {
+                    // During initial load: draw each region
+                    _.forEach(regions, function(reg) {
+                        $scope.drawRegion(reg, null);
+                    })
+                    // Scale map to fit top-level container
+                    $scope.upscaleMap();
+                    // Unregister previous watch ...
+                    unregister();
+
+                    // ... and set up deep watch of all elements of $scope.regions
+                    $scope.$watch('regions', function(newV, oldV) {
+                        collectionAssistant(newV, oldV)
+                            .indexBy('code')
+                            .deepComparison()
+                            .on('new', $scope.drawRegion)
+                            .on('deleted', $scope.eraseRegion)
+                            .on('update', $scope.drawRegion);
+                    }, true)
+                }
+            })
 			// }}}
 		}
 	}
