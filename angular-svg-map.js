@@ -49,7 +49,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 					small: 10,
 					large: 100,
 				},
-				
+
 				contour: { // Style of a map contour
 					stroke: 'black', // stroke colour
 					width: 4, // stroke width
@@ -57,12 +57,12 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 					dasharray: "",
 				},
 
-				
+
 				background: { // Styles for map background
 					grid: true, // Draw (or do not draw grid)
 					color: '#DCDCDC', // Background colour
 				},
-				
+
 				events: { // Mouse event callbacks
 					click: null,
 					dblclick: null,
@@ -93,7 +93,8 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			// Utils {{{
 			/** Generate random RGB colour */
 			$scope.randomColor = function() {
-				return sprintf("RGB(%d,%d,%d)", _.random(0,255),_.random(0,255),_.random(0,255));
+				var colors = [ _.random(0,255), _.random(0,255), _.random(0,255) ];
+				return 'RGB(' + colors.join(',') + ')';
 			}
 
 			/** Recompute bounding box of an element using a transformation matrix.
@@ -209,6 +210,45 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			}
 			/// }}}
 
+			// Stripped out version of d3.svg.transform to facilitate specification of values of transform attribute {{{
+			// Copyright (c) 2013 Erik Cunningham, Spiros Eliopoulos
+			// https://github.com/trinary/d3-transform
+			var d3transform = function(chain) {
+				var transforms = [];
+				if (chain !== undefined)
+					transforms.push(chain);
+
+				function push(kind, args) {
+					var n = args.length;
+					transforms.push(function() {
+						return kind + '(' + (n == 1 && typeof args[0] == 'function'
+							? args[0].apply(this, arr(arguments)) : args) + ')';
+					});
+				};
+
+				function arr(args) {
+					return Array.prototype.slice.call(args);
+				}
+
+				var my = function() {
+					var that = this,
+						args = arr(arguments);
+
+					return transforms.map(function(f) {
+						return f.apply(that, args);
+					}).join(' ');
+				};
+
+				['translate', 'rotate', 'scale', 'matrix', 'skewX', 'skewY'].forEach(function(t) {
+					my[t] = function() {
+						push(t, arr(arguments));
+						return my;
+					};
+				});
+				return my;
+			};
+			// }}}
+
 			// Zoom {{{
 			// Scale at a givent coordinate
 			$scope.scale = function(point, factor, element) {
@@ -232,12 +272,14 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 					(point[1] - unscaled[1]*factor)/factor
 				];
 
+
 				// Create transform string
-				var transform = sprintf("scale(%0.2f) translate(%0.2f %0.2f)",
-						factor, translation[0], translation[1])
+				var transform = d3transform()
+					.scale(factor)
+					.translate(translation[0], translation[1]);
 
 				// Run transformations
-				element.transform(transform);
+				element.transform(transform());
 			}
 
 			/** Zoom layer. Bound to scroll events */
