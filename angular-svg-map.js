@@ -240,32 +240,51 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			 *	 icon: path to SVG file
 			 *	 fill: <CSS fill colour specification>
 			 *	 stroke: <stroke (contour) width>
+             *	 animate: {
+             *	    destination: [X, Y] // Destination point on a map
+             *	    duration: Number, // Duration in milliseconds required to reach the destination point
+             *	    callback: Function // Callback executed after transformation stops
+             *	 }
 			 * }
 			*/
 			$scope.drawMarker = function(item) {
 				var svg = Snap('#' + item.code);
 				if (!svg) {
+                    svg = $scope.svg
+                        .group()
+                        .attr('id', item.code);
+
 					Snap.load(item.icon, function(xml) {
-						svg = $scope.svg
-							.group()
-							.attr('id', item.code)
 						$scope.svgMarkers.append(svg);
 						svg.append(xml);
-                        $scope.drawMarker(item)
+                        $scope.drawMarker(item);
+                        svg.drag();
 					})
 				} else {
+                    // Set properties
 					svg.attr({
 						'fill': item.fill ||  $scope.randomColor(),
 						'stroke': item.stroke || $scope.config.region.stroke,
 						'stroke-width': item.width || $scope.config.region.width,
 					})
-					svg.select('svg').attr({
-						x: item.x,
-						y: item.y
-					})
+
+                    // Enable animation transformations
+                    if (item.animate) {
+                        var start = [0, 0];
+                        if (svg.matrix)
+                            start = [svg.matrix.e, svg.matrix.f];
+
+                        Snap.animate(start, item.animate.destination, function (coord) {
+                            svg.attr({
+                                transform: d3transform().translate(coord[0], coord[1])()
+                            })
+                        }, item.animate.duration, item.animate.easing, item.animate.callback);
+                        item.animate = null;
+                    }
 				}
 			}
 
+            /** Draw a svg representation of a region or a marker */
 			$scope.drawItem = function(item) {
 				var func = (item.icon) ? $scope.drawMarker : $scope.drawRegion;
 				func(item);

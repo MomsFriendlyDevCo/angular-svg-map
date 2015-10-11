@@ -3,7 +3,7 @@
 		"code": "plane",
 		"icon": "../markers/plane.svg",
 		"name": "Plane",
-		"fill": "blue",
+		"fill": "black",
 		"x": 0,
 		"y": 0
 	}

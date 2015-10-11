@@ -25,7 +25,20 @@ app.controller('demoController', function($scope, $http, collectionAssistant, $t
 
 		// Hack to put markers in
 		$http.get('../data/markers.json').success(function(data) {
-			$scope.mapRegions = $scope.mapRegions.concat(data)
+			$scope.mapRegions = $scope.mapRegions.concat(data);
+			var item = data[0]
+			item.animate = {
+				destination: [400,200],
+				duration: 3000,
+				callback: function() {
+					$timeout(function() {
+						item.animate = {
+							destination: [800,400],
+							duration: 3000,
+						}
+					}, 500);
+				}
+		   }
 		})
 	});
 
