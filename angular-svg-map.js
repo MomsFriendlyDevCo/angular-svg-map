@@ -180,10 +180,13 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 						.attr('id', pathId)
 						.data(region)
 
+                    var transform = d3transform()
+                        .scale($scope.config.region.scale)
+
 				 	var group = $scope.svg
 						.group(path)
 						.attr('id',region.code)
-						.transform('scale(' + $scope.config.region.scale + ')')
+						.transform(transform())
 						.append(path)
 						$scope.elements.append(group);
 				} else
