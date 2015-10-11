@@ -163,6 +163,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				.attr({
 					height: $scope.map.height,
 					width: $scope.map.width,
+                    fill: 'green'
 				})
 
 			// Main layer (a group under canvas)
@@ -171,7 +172,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 
 			// Contour styles
 			$scope.contour = $scope.svg
-				.rect(0, 0, $scope.map.width, $scope.map.height)
+				.rect(0, 0, '100%', '100%')
 				.attr('fill', $scope.config.contour.fill)
 				.attr('stroke', $scope.config.contour.stroke)
 				.attr('stroke-width', $scope.config.contour.width)
@@ -180,7 +181,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 
 			// Background colour
 			$scope.backgroundColor = $scope.svg
-				.rect(0, 0, $scope.map.width, $scope.map.height)
+				.rect(0, 0, '100%', '100%')
 				.attr('fill', $scope.config.background.color)
 				.attr('id', 'backgroundColor')
 			$scope.layer.append($scope.backgroundColor);
@@ -188,7 +189,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			// Grid
 			if ($scope.config.background.grid) {
 				$scope.backgroundGrid = $scope.svg
-					.rect(0, 0, $scope.map.width, $scope.map.height)
+					.rect(0, 0, '100%', '100%')
 					.attr('fill', "url(#grid)")
 					.attr('id', 'backgroundGrid')
 				$scope.layer.append($scope.backgroundGrid);
@@ -233,7 +234,9 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 					'stroke-width': region.width || $scope.config.region.width
 				})
 			}
+            /// }}}
 
+            // Markers and regions {{{
 			/** Draw a marker on a map
 			 * {
 			 *	 code: <unique id>
@@ -298,7 +301,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 						element.remove();
 				}
 			}
-			/// }}}
+            // }}}
 
 			// Zoom {{{
 			// Scale at a givent coordinate
@@ -436,8 +439,21 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			$scope.setLayerEventCallback('mouseover');
 			// }}}
 
+            $scope.resizeMap = function(width, height) {
+                $scope.map.width = width;
+                $scope.map.height = height;
+                var attr = {
+					height: $scope.map.height,
+					width: $scope.map.width
+				};
+			    $scope.svg.attr(attr);
+                $scope.upscaleMap();
+            }
+
 			/** Scale map to fit top-level container */
 			$scope.upscaleMap = function() {
+                // Kill scale of regions so it is not in the way
+                $scope.svgRegions.attr({transform: ""});
 				var bbox = $scope.svgRegions.getBBox();
 				var scaleFactor = $scope.config.map.width/bbox.w;
 				$scope.scale([0, 0], scaleFactor, $scope.svgRegions);

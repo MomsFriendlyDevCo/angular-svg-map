@@ -56,5 +56,5 @@ app.controller('demoController', function($scope, $http, collectionAssistant, $t
 			$scope.redInvasion(freq);
 		},freq)
 	};
-	//$scope.redInvasion(200);
+	$scope.redInvasion(200);
 });
