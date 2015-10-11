@@ -119,23 +119,6 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				return newbox;
 			}
 
-            /**
-            * Generate a random 'safe' GUID
-            * This function is usually used to generate the unique ID's of D3 elements
-            * @param string format The format of the GUID to use
-            * @param string charSet Available ASCII single characters to choose from
-            * @return string Random GUID style string
-            */
-            function guid (format, charSet) {
-                if (!charSet)
-                    charSet = 'abcdefghijklmnopqrstuvwxyz';
-                if (!format)
-                    format = "ixxxxxxxxxxxxxxxx";
-                return format.replace(/x/g, function(c) {
-                    return charSet.substr(Math.floor(Math.random() * charSet.length), 1);
-                });
-            };
-
 			// Stripped out version of d3.svg.transform to facilitate specification of values of transform attribute
 			// Copyright (c) 2013 Erik Cunningham, Spiros Eliopoulos
 			// https://github.com/trinary/d3-transform
@@ -211,63 +194,90 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				$scope.layer.append($scope.backgroundGrid);
 			}
 
-			$scope.elements = $scope.svg
+			$scope.svgRegions = $scope.svg
 				.group()
-				.attr({id: 'elements'})
-			$scope.layer.append($scope.elements);
+				.attr({id: 'regions'})
+			$scope.layer.append($scope.svgRegions);
 
-			/** Draw or redraw a region on a map
+			$scope.svgMarkers = $scope.svg
+				.group()
+				.attr({id: 'markers'})
+			$scope.layer.append($scope.svgMarkers);
+
+			/** Draw a region on a map
 			 * {
-			 *     code: <unique id>
-			 *     path: <SVG path specification>
-			 *     fill: <CSS fill colour specification>
-			 *     stroke: <stroke (contour) width>
-			 *     scale: <scale factor>
-			 *     classed: <CSS classes>
+			 *	 code: <unique id>
+			 *	 path: <SVG path specification>
+			 *	 fill: <CSS fill colour specification>
+			 *	 stroke: <stroke (contour) width>
 			 * }
 			*/
 			$scope.drawRegion = function(region) {
-                var svg = Snap('#' + region.code);
+				var svg = Snap('#' + region.code);
 				if (!svg) {
 					var path = $scope.svg.path()
 						.attr('d', region.path)
 						.data(region)
 
-                    var transform = d3transform()
-                        .scale($scope.config.region.scale)
-
 				 	svg = $scope.svg
 						.group(path)
 						.attr('id',region.code)
-						.transform(transform())
 						.append(path);
 
-                    $scope.elements.append(svg);
+					$scope.svgRegions.append(svg);
 				}
 
-				if (!svg)
-					console.error('Cannot find element by id', svg)
-				else {
-					svg.attr({
-						'fill': region.fill ||  $scope.config.region.fill || $scope.randomColor(),
-						'stroke': region.stroke || $scope.config.region.stroke,
-						'stroke-width': region.width || $scope.config.region.width
+				svg.attr({
+					'fill': region.fill ||  $scope.config.region.fill || $scope.randomColor(),
+					'stroke': region.stroke || $scope.config.region.stroke,
+					'stroke-width': region.width || $scope.config.region.width
+				})
+			}
+
+			/** Draw a marker on a map
+			 * {
+			 *	 code: <unique id>
+			 *	 icon: path to SVG file
+			 *	 fill: <CSS fill colour specification>
+			 *	 stroke: <stroke (contour) width>
+			 * }
+			*/
+			$scope.drawMarker = function(item) {
+				var svg = Snap('#' + item.code);
+				if (!svg) {
+					Snap.load(item.icon, function(xml) {
+						svg = $scope.svg
+							.group()
+							.attr('id', item.code)
+						$scope.svgMarkers.append(svg);
+						svg.append(xml);
+                        $scope.drawMarker(item)
 					})
-					if (region.classed)
-						svg.addClass(region.classed);
+				} else {
+					svg.attr({
+						'fill': item.fill ||  $scope.randomColor(),
+						'stroke': item.stroke || $scope.config.region.stroke,
+						'stroke-width': item.width || $scope.config.region.width,
+					})
+					svg.select('svg').attr({
+						x: item.x,
+						y: item.y
+					})
 				}
 			}
 
+			$scope.drawItem = function(item) {
+				var func = (item.icon) ? $scope.drawMarker : $scope.drawRegion;
+				func(item);
+			}
+
 			/** Remove a region from a map */
-			$scope.eraseRegion = function(region) {
-				if (region && region.code) {
+			$scope.eraseItem = function(item) {
+				if (item && item.code) {
 					var element = Snap('#' + code);
 					if (element)
 						element.remove();
-					else
-						console.error('Cannot find element by id', element.code)
-				} else
-					console.error('Invalid region', region)
+				}
 			}
 			/// }}}
 
@@ -403,39 +413,39 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			$scope.setLayerEventCallback('mouseover');
 			// }}}
 
-            /** Scale map to fit top-level container */
-            $scope.upscaleMap = function() {
-                var bbox = $scope.elements.getBBox();
-                var scaleFactor = $scope.config.map.width/bbox.w;
-                $scope.scale([0, 0], scaleFactor, $scope.elements);
-            }
+			/** Scale map to fit top-level container */
+			$scope.upscaleMap = function() {
+				var bbox = $scope.svgRegions.getBBox();
+				var scaleFactor = $scope.config.map.width/bbox.w;
+				$scope.scale([0, 0], scaleFactor, $scope.svgRegions);
+			}
 
-            // Watchers {{{
-            var unregister = $scope.$watchCollection('regions', function(regions) {
-                // Assume that the initial load of regions is atomic (well, ish)
-                // Also, assume that regions come as an array of paths, that is,
-                // draw will be synchronous, otherwise draw need to return some notion
-                // of draw being completed. This is required to "upscale" the map
-                // to fit the top-level container
-                if (regions.length) {
-                    // During initial load: draw each region
-                    _.forEach(regions, $scope.drawRegion);
-                    // Scale map to fit top-level container
-                    $scope.upscaleMap();
-                    // Unregister previous watch ...
-                    unregister();
+			// Watchers {{{
+			var unregister = $scope.$watchCollection('regions', function(regions) {
+				// Assume that the initial load of regions is atomic (well, ish)
+				// Also, assume that regions come as an array of paths, that is,
+				// draw will be synchronous, otherwise draw need to return some notion
+				// of draw being completed. This is required to "upscale" the map
+				// to fit the top-level container
+				if (regions.length) {
+					// During initial load: draw each region
+					_.forEach(regions, $scope.drawItem);
+					// Scale map to fit top-level container
+					$scope.upscaleMap();
+					// Unregister previous watch ...
+					unregister();
 
-                    // ... and set up deep watch of all elements of $scope.regions
-                    $scope.$watch('regions', function(newV, oldV) {
-                        collectionAssistant(newV, oldV)
-                            .indexBy('code')
-                            .deepComparison()
-                            .on('new', $scope.drawRegion)
-                            .on('deleted', $scope.eraseRegion)
-                            .on('update', $scope.drawRegion);
-                    }, true)
-                }
-            })
+					// ... and set up deep watch of all elements of $scope.regions
+					$scope.$watch('regions', function(newV, oldV) {
+						collectionAssistant(newV, oldV)
+							.indexBy('code')
+							.deepComparison()
+							.on('new', $scope.drawItem)
+							.on('deleted', $scope.drawItem)
+							.on('update', $scope.drawItem);
+					}, true)
+				}
+			})
 			// }}}
 		}
 	}

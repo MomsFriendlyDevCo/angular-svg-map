@@ -22,6 +22,11 @@ app.controller('demoController', function($scope, $http, collectionAssistant, $t
 	$http.get('../data/world.json').success(function(data) {
 		// Let's load the world's map ...
 		$scope.mapRegions = data;
+
+		// Hack to put markers in
+		$http.get('../data/markers.json').success(function(data) {
+			$scope.mapRegions = $scope.mapRegions.concat(data)
+		})
 	});
 
 	// ... and conquer the world!

@@ -1,0 +1,10 @@
+[
+	{
+		"code": "plane",
+		"icon": "../markers/plane.svg",
+		"name": "Plane",
+		"fill": "blue",
+		"x": 0,
+		"y": 0
+	}
+]
