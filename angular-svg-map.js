@@ -118,6 +118,61 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				newbox.height = newbox.h = newbox.y2 - newbox.y;
 				return newbox;
 			}
+
+            /**
+            * Generate a random 'safe' GUID
+            * This function is usually used to generate the unique ID's of D3 elements
+            * @param string format The format of the GUID to use
+            * @param string charSet Available ASCII single characters to choose from
+            * @return string Random GUID style string
+            */
+            function guid (format, charSet) {
+                if (!charSet)
+                    charSet = 'abcdefghijklmnopqrstuvwxyz';
+                if (!format)
+                    format = "ixxxxxxxxxxxxxxxx";
+                return format.replace(/x/g, function(c) {
+                    return charSet.substr(Math.floor(Math.random() * charSet.length), 1);
+                });
+            };
+
+			// Stripped out version of d3.svg.transform to facilitate specification of values of transform attribute
+			// Copyright (c) 2013 Erik Cunningham, Spiros Eliopoulos
+			// https://github.com/trinary/d3-transform
+			function d3transform(chain) {
+				var transforms = [];
+				if (chain !== undefined)
+					transforms.push(chain);
+
+				function push(kind, args) {
+					var n = args.length;
+					transforms.push(function() {
+						return kind + '(' + (n == 1 && typeof args[0] == 'function'
+							? args[0].apply(this, arr(arguments)) : args) + ')';
+					});
+				};
+
+				function arr(args) {
+					return Array.prototype.slice.call(args);
+				}
+
+				var my = function() {
+					var that = this,
+						args = arr(arguments);
+
+					return transforms.map(function(f) {
+						return f.apply(that, args);
+					}).join(' ');
+				};
+
+				['translate', 'rotate', 'scale', 'matrix', 'skewX', 'skewY'].forEach(function(t) {
+					my[t] = function() {
+						push(t, arr(arguments));
+						return my;
+					};
+				});
+				return my;
+			};
 			// }}}
 
 			// SVG canvas {{{
@@ -171,37 +226,35 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			 *     classed: <CSS classes>
 			 * }
 			*/
-			$scope.drawRegion = function(region, oldRegion) {
-				var path = null,
-					pathId = region.code + '-path';
-				if (!oldRegion) {
-					path = $scope.svg.path()
+			$scope.drawRegion = function(region) {
+                var svg = Snap('#' + region.code);
+				if (!svg) {
+					var path = $scope.svg.path()
 						.attr('d', region.path)
-						.attr('id', pathId)
 						.data(region)
 
                     var transform = d3transform()
                         .scale($scope.config.region.scale)
 
-				 	var group = $scope.svg
+				 	svg = $scope.svg
 						.group(path)
 						.attr('id',region.code)
 						.transform(transform())
-						.append(path)
-						$scope.elements.append(group);
-				} else
-					path = Snap('#' + pathId);
+						.append(path);
 
-				if (!path)
-					console.error('Cannot find element by id', pathId)
+                    $scope.elements.append(svg);
+				}
+
+				if (!svg)
+					console.error('Cannot find element by id', svg)
 				else {
-					path.attr({
+					svg.attr({
 						'fill': region.fill ||  $scope.config.region.fill || $scope.randomColor(),
 						'stroke': region.stroke || $scope.config.region.stroke,
 						'stroke-width': region.width || $scope.config.region.width
 					})
 					if (region.classed)
-						path.addClass(region.classed);
+						svg.addClass(region.classed);
 				}
 			}
 
@@ -217,45 +270,6 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 					console.error('Invalid region', region)
 			}
 			/// }}}
-
-			// Stripped out version of d3.svg.transform to facilitate specification of values of transform attribute {{{
-			// Copyright (c) 2013 Erik Cunningham, Spiros Eliopoulos
-			// https://github.com/trinary/d3-transform
-			var d3transform = function(chain) {
-				var transforms = [];
-				if (chain !== undefined)
-					transforms.push(chain);
-
-				function push(kind, args) {
-					var n = args.length;
-					transforms.push(function() {
-						return kind + '(' + (n == 1 && typeof args[0] == 'function'
-							? args[0].apply(this, arr(arguments)) : args) + ')';
-					});
-				};
-
-				function arr(args) {
-					return Array.prototype.slice.call(args);
-				}
-
-				var my = function() {
-					var that = this,
-						args = arr(arguments);
-
-					return transforms.map(function(f) {
-						return f.apply(that, args);
-					}).join(' ');
-				};
-
-				['translate', 'rotate', 'scale', 'matrix', 'skewX', 'skewY'].forEach(function(t) {
-					my[t] = function() {
-						push(t, arr(arguments));
-						return my;
-					};
-				});
-				return my;
-			};
-			// }}}
 
 			// Zoom {{{
 			// Scale at a givent coordinate
@@ -389,7 +403,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			$scope.setLayerEventCallback('mouseover');
 			// }}}
 
-            /** Map to fit top-level container */
+            /** Scale map to fit top-level container */
             $scope.upscaleMap = function() {
                 var bbox = $scope.elements.getBBox();
                 var scaleFactor = $scope.config.map.width/bbox.w;
@@ -405,9 +419,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
                 // to fit the top-level container
                 if (regions.length) {
                     // During initial load: draw each region
-                    _.forEach(regions, function(reg) {
-                        $scope.drawRegion(reg, null);
-                    })
+                    _.forEach(regions, $scope.drawRegion);
                     // Scale map to fit top-level container
                     $scope.upscaleMap();
                     // Unregister previous watch ...
