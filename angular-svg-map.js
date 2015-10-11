@@ -401,8 +401,12 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 					$scope.layer.transform($scope.layer.matrix);
 					$scope.lastmove = [x,y];
 				},
-				function(x,y) {
+				function(x,y) { // Drag start
+                    $scope.layer.attr('cursor','move');
 					$scope.lastmove = [x,y];
+				},
+				function(x,y) { // Drag stop
+                    $scope.layer.attr('cursor','default');
 				}
 			);
 			// }}}
