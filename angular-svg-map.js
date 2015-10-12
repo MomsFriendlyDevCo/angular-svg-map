@@ -52,9 +52,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 
 				contour: { // Style of a map contour
 					stroke: 'black', // stroke colour
-					width: 4, // stroke width
-					fill: 'none', // fill colour
-					dasharray: "",
+					width: 1 // stroke width
 				},
 
 
@@ -171,20 +169,12 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			$scope.layer.transform(Snap.matrix());
 
 			// Contour styles
-			$scope.contour = $scope.svg
-				.rect(0, 0, '100%', '100%')
-				.attr('fill', $scope.config.contour.fill)
-				.attr('stroke', $scope.config.contour.stroke)
-				.attr('stroke-width', $scope.config.contour.width)
-				.attr('stroke-dasharray', $scope.config.contour.dasharray)
-				.attr('id', 'contour')
-
-			// Background colour
-			$scope.backgroundColor = $scope.svg
+			$scope.contour = $scope.layer
 				.rect(0, 0, '100%', '100%')
 				.attr('fill', $scope.config.background.color)
-				.attr('id', 'backgroundColor')
-			$scope.layer.append($scope.backgroundColor);
+				.attr('stroke', $scope.config.contour.stroke)
+				.attr('stroke-width', $scope.config.contour.width)
+				.attr('id', 'contour')
 
 			// Grid
 			if ($scope.config.background.grid) {
@@ -195,17 +185,23 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				$scope.layer.append($scope.backgroundGrid);
 			}
 
+			// Container for regions (e.g., countries). Should appear
+			// before the container with map markers, so markers do not
+			// appear below countries
 			$scope.svgRegions = $scope.svg
 				.group()
 				.attr({id: 'regions'})
 			$scope.layer.append($scope.svgRegions);
 
+			// Container for markers -- SVG icons that appea on a map
+			// and can be moved around
 			$scope.svgMarkers = $scope.svg
 				.group()
 				.attr({id: 'markers'})
 			$scope.layer.append($scope.svgMarkers);
 
-			/** Draw a region on a map
+			/** Draw a region on a map. Region is a static closed path that
+			 *   outlines a specific map area (e.g., country, island etc).
 			 * {
 			 *	 code: <unique id>
 			 *	 path: <SVG path specification>
