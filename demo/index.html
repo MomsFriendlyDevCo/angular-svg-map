@@ -16,6 +16,20 @@
 	<!-- Demo setup -->
 	<script src="app.js"/></script>
 	<script src="../angular-svg-map.js"/></script>
+
+	<style>
+		/* Make the map take up the whole screen {{{ */
+		body {
+			margin: 0;
+		}
+
+		html, body, body > div, body > div > div, svg-map, svg-map > svg {
+			display: block;
+			height: 100%;
+			width: 100%;
+		}
+		/* }}} */
+	</style>
 </head>
 
 <body ng-app="app">
