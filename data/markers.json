@@ -1,9 +1,8 @@
 [
 	{
 		"code": "plane",
-		"icon": "../markers/plane.svg",
+		"icon": "../markers/marker.svg",
 		"name": "Plane",
-		"fill": "black",
 		"x": 0,
 		"y": 0
 	}

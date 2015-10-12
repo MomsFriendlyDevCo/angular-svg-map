@@ -3,9 +3,10 @@
   "version": "0.0.0",
   "homepage": "https://github.com/MomsFriendlyDevCo/angular-svg-map",
   "dependencies": {
+    "Snap.svg": "~0.4.1",
     "angular": "~1.4.3",
     "angular-collection-assistant": "~1.1.4",
-    "lodash": "~3.10.0",
-    "Snap.svg": "~0.4.1"
+    "jquery": "~2.1.4",
+    "lodash": "~3.10.0"
   }
 }

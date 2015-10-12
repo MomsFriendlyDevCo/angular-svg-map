@@ -25,11 +25,6 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 
 			// Default settings
 			$scope.defaults = {
-				map: { // Map dimensions
-					height: 500,
-					width: 1000
-				},
-
 				zoom: {
 					min: 1, // Minimal zoom
 					max: 10, // Maximal zoom
@@ -55,7 +50,6 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 					width: 1 // stroke width
 				},
 
-
 				background: { // Styles for map background
 					grid: true, // Draw (or do not draw grid)
 					color: '#DCDCDC', // Background colour
@@ -76,6 +70,10 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			$scope.hardDefaults = {
 				zoom: {
 					min: 1,
+				},
+				map: { // Map dimensions
+					height: "100%",
+					width: "100%"
 				}
 			}
 
@@ -260,13 +258,6 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
                         svg.drag();
 					})
 				} else {
-                    // Set properties
-					svg.attr({
-						'fill': item.fill ||  $scope.randomColor(),
-						'stroke': item.stroke || $scope.config.region.stroke,
-						'stroke-width': item.width || $scope.config.region.width,
-					})
-
                     // Enable animation transformations
                     if (item.animate) {
                         var start = [0, 0];
@@ -280,6 +271,8 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
                         }, item.animate.duration, item.animate.easing, item.animate.callback);
                         item.animate = null;
                     }
+
+					// Some other transformations of the SVG of an icon here
 				}
 			}
 
@@ -287,15 +280,6 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			$scope.drawItem = function(item) {
 				var func = (item.icon) ? $scope.drawMarker : $scope.drawRegion;
 				func(item);
-			}
-
-			/** Remove a region from a map */
-			$scope.eraseItem = function(item) {
-				if (item && item.code) {
-					var element = Snap('#' + code);
-					if (element)
-						element.remove();
-				}
 			}
             // }}}
 
@@ -446,13 +430,26 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
                 $scope.upscaleMap();
             }
 
-			/** Scale map to fit top-level container */
-			$scope.upscaleMap = function() {
+			$(window).resize(function(e) {
+				$scope.upscaleMap(e);
+			});
+
+			/** Scale map to fit top-level container (horizontal) */
+			$scope.upscaleMap = function(dimension) {
+				var width = $("#canvas").width();
+				var height = $("#canvas").height();
+
                 // Kill scale of regions so it is not in the way
                 $scope.svgRegions.attr({transform: ""});
 				var bbox = $scope.svgRegions.getBBox();
-				var scaleFactor = $scope.config.map.width/bbox.w;
+
+				var scaleFactor = width/bbox.width;
 				$scope.scale([0, 0], scaleFactor, $scope.svgRegions);
+
+				bbox = $scope.svgRegions.getBBox();
+
+				var matrix = $scope.svgRegions.matrix.translate(0, ((height - bbox.height)/2)/scaleFactor);
+				$scope.svgRegions.transform(matrix)
 			}
 
 			// Watchers {{{
