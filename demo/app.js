@@ -5,10 +5,6 @@ var app = angular.module('app', [
 app.controller('demoController', function($scope, $http, collectionAssistant, $timeout) {
 	$scope.mapRegions = [];
 	$scope.mapConfig = {
-		contour: {
-			stroke: 'gray',
-			width: 10
-		},
 		events: {
 			click: function(x,y,data) {
 				//console.log('Mouse click at position', [x,y], "width data bound:",data);
@@ -24,7 +20,7 @@ app.controller('demoController', function($scope, $http, collectionAssistant, $t
 		$scope.mapRegions = data;
 
 		// Hack to put markers in
-		$http.get('../data/markers.json').success(function(data) {
+		/* $http.get('../data/markers.json').success(function(data) {
 			$scope.mapRegions = $scope.mapRegions.concat(data);
 			var item = data[0]
 			item.animate = {
@@ -39,7 +35,7 @@ app.controller('demoController', function($scope, $http, collectionAssistant, $t
 					}, 500);
 				}
 		   }
-		})
+		})*/
 	});
 
 	// ... and conquer the world!
@@ -56,5 +52,5 @@ app.controller('demoController', function($scope, $http, collectionAssistant, $t
 			$scope.redInvasion(freq);
 		},freq)
 	};
-	$scope.redInvasion(200);
+	//$scope.redInvasion(200);
 });
