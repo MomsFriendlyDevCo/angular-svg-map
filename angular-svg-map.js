@@ -436,14 +436,17 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				$scope.upscaleMap(e);
 			});
 
-			/** Scale map to fit top-level container (horizontal) */
+			/** Scale map to fit top-level container (horizontally first) */
 			$scope.upscaleMap = function(dimension) {
+                // Get dimensions of a parent container
 				var parWidth = $("#canvas").parent().width(),
 				    parHeight = $("#canvas").parent().height();
 
+                // Compute height based on the aspect ration
                 var width = parWidth;
                 var height = parWidth/$scope.map.ratio;
 
+                // Readjust height and width if the height of the parent is too small
                 if (parHeight < height) {
                     height = parHeight;
                     width = height*$scope.map.ratio;
@@ -453,8 +456,10 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
                 $scope.svgRegions.attr({transform: ""});
 				var bbox = $scope.svgRegions.getBBox();
 
+                // Scale regions container to fit the outer SVG container (zoom-area)
 				$scope.scale([0, 0], width/bbox.width, $scope.svgRegions);
 
+                // Update dimensions of the inner SVG so it is displayed properly
 				bbox = $scope.svgRegions.getBBox();
                 $scope.zoomArea.attr({
                     width: bbox.width,
@@ -463,6 +468,8 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
                     y: (parHeight - bbox.height)/2
                 });
 
+                // Capture new height and width of the map so zooming
+                // knows where the boundaries are
                 $scope.map.width = bbox.width;
                 $scope.map.height = bbox.height;
 			}
