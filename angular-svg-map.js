@@ -69,8 +69,8 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 					min: 1,
 				},
 				map: { // Map dimensions
-					height: "100%",
-					width: "100%"
+					height: 0,
+					width: 0
 				}
 			}
 
@@ -154,50 +154,58 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			// SVG canvas {{{
 			$scope.svg = Snap("#canvas") // Main SVG canvas
 				.attr({
-					height: $scope.map.height,
-					width: $scope.map.width,
-                    fill: 'green'
+					height: "100%",
+					width: "100%"
 				})
 
-			// Main layer (a group under canvas)
-			$scope.layer = $scope.svg.group().attr('id', 'layer')
-			$scope.layer.transform(Snap.matrix());
-
+            // SVG where map is shown
 			$scope.zoomArea = $scope.svg
-				.group()
-				.attr({id: 'zoom-area'})
-			$scope.layer.append($scope.zoomArea);
+				.svg()
+				.attr({
+                    id: 'zoom-area',
+                    x: 0,
+                    y: 0
+                })
+
+            // Remove "Created with SNAP" descriptions. It is annoying
+            Snap.selectAll('desc').remove();
+
+            // Main layer
+			$scope.layer = $scope.zoomArea
+                .group()
+                .attr('id', 'layer')
+			    .transform(Snap.matrix());
+
+            // Group for background info
+            $scope.background = $scope.layer
+                .group()
+                .attr('id', 'background');
 
 			// Contour styles
-			$scope.background = $scope.zoomArea
+			$scope.background
 				.rect(0, 0, '100%', '100%')
 				.attr('fill', $scope.config.background.fill)
 				.attr('stroke', $scope.config.background.stroke)
 				.attr('stroke-width', $scope.config.background.strokeWidth)
-				.attr('id', 'background')
 
 			// Grid
 			if ($scope.config.background.grid) {
-			    $scope.grid = $scope.zoomArea
+			    $scope.background
 			        .rect(0, 0, '100%', '100%')
 			        .attr('fill', "url(#grid)")
-			        .attr('id', 'grid')
 			}
 
 			// Container for regions (e.g., countries). Should appear
 			// before the container with map markers, so markers do not
 			// appear below countries
-			$scope.svgRegions = $scope.svg
+			$scope.svgRegions = $scope.layer
 				.group()
 				.attr({id: 'regions'})
-			$scope.zoomArea.append($scope.svgRegions);
 
-			// Container for markers -- SVG icons that appea on a map
-			// and can be moved around
-			$scope.svgMarkers = $scope.svg
+			// Container for markers -- SVG icons that appea on a map and can be moved around
+			$scope.svgMarkers = $scope.layer
 				.group()
 				.attr({id: 'markers'})
-			$scope.zoomArea.append($scope.svgMarkers);
 
 			/** Draw a region on a map. Region is a static closed path that
 			 *   outlines a specific map area (e.g., country, island etc).
@@ -308,7 +316,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				// Create transform string
 				var transform = d3transform()
 					.scale(factor)
-					.translate(translation[0], translation[1]);
+					.translate(translation[0], translation[1])
 
 				// Run transformations
 				element.transform(transform());
@@ -333,7 +341,13 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 					(scale < min) ? min : scale
 
 				// Transform layer applying new scale factor
-				$scope.scale([e.x, e.y], scale, $scope.layer)
+                // Note, since scaling is applied to group withing
+                // an SVG container that has coordinates, these coordinates
+                // have to be taken into account during zoom
+				$scope.scale([
+                    e.x - $scope.zoomArea.attr('x'),
+                    e.y - $scope.zoomArea.attr('y')
+                ], scale, $scope.layer)
 
 				var box = $scope.layer.getBBox();
 				var matrix = $scope.layer.matrix;
@@ -439,20 +453,18 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
                 $scope.svgRegions.attr({transform: ""});
 				var bbox = $scope.svgRegions.getBBox();
 
-				var scaleFactor = width/bbox.width;
-				$scope.scale([0, 0], scaleFactor, $scope.svgRegions);
+				$scope.scale([0, 0], width/bbox.width, $scope.svgRegions);
 
 				bbox = $scope.svgRegions.getBBox();
+                $scope.zoomArea.attr({
+                    width: bbox.width,
+                    height: bbox.height,
+                    x: (parWidth - bbox.width)/2,
+                    y: (parHeight - bbox.height)/2
+                });
 
-				var matrix = $scope.svgRegions.matrix.translate(
-                    ((parWidth - bbox.width)/2)/scaleFactor,
-                    ((parHeight - bbox.height)/2)/scaleFactor
-                );
-				$scope.svgRegions.transform(matrix)
-
-                var attr = _.pick($scope.svgRegions.getBBox(), ['x','y','width','height'])
-                $scope.background.attr(attr);
-                $scope.grid.attr(attr);
+                $scope.map.width = bbox.width;
+                $scope.map.height = bbox.height;
 			}
 
 			// Watchers {{{
