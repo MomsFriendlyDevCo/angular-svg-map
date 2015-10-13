@@ -28,14 +28,14 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				zoom: {
 					min: 1, // Minimal zoom
 					max: 10, // Maximal zoom
-					step: 0.2, // Zoom step
+					step: 0.2 // Zoom step
 				},
 
 				// Common configurations per map region. Over-ridden by
 				// same setting in regions (if provided)
 				region: {
 					stroke: 'black', // colour
-					width: 1, // stroke width
+					strokeWidth: 1, // stroke width
 					fill: null, // fill colour
 					scale: 1, // scale factor
 				},
@@ -45,14 +45,11 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 					large: 100,
 				},
 
-				contour: { // Style of a map contour
-					stroke: 'black', // stroke colour
-					width: 1 // stroke width
-				},
-
 				background: { // Styles for map background
 					grid: true, // Draw (or do not draw grid)
-					color: '#DCDCDC', // Background colour
+					fill: '#DCDCDC', // Background colour
+                    stroke: 'black', // stroke colour
+					strokeWidth: 1 // stroke width
 				},
 
 				events: { // Mouse event callbacks
@@ -166,21 +163,25 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			$scope.layer = $scope.svg.group().attr('id', 'layer')
 			$scope.layer.transform(Snap.matrix());
 
+			$scope.zoomArea = $scope.svg
+				.group()
+				.attr({id: 'zoom-area'})
+			$scope.layer.append($scope.zoomArea);
+
 			// Contour styles
-			$scope.contour = $scope.layer
+			$scope.background = $scope.zoomArea
 				.rect(0, 0, '100%', '100%')
-				.attr('fill', $scope.config.background.color)
-				.attr('stroke', $scope.config.contour.stroke)
-				.attr('stroke-width', $scope.config.contour.width)
-				.attr('id', 'contour')
+				.attr('fill', $scope.config.background.fill)
+				.attr('stroke', $scope.config.background.stroke)
+				.attr('stroke-width', $scope.config.background.strokeWidth)
+				.attr('id', 'background')
 
 			// Grid
 			if ($scope.config.background.grid) {
-				$scope.backgroundGrid = $scope.svg
-					.rect(0, 0, '100%', '100%')
-					.attr('fill', "url(#grid)")
-					.attr('id', 'backgroundGrid')
-				$scope.layer.append($scope.backgroundGrid);
+			    $scope.grid = $scope.zoomArea
+			        .rect(0, 0, '100%', '100%')
+			        .attr('fill', "url(#grid)")
+			        .attr('id', 'grid')
 			}
 
 			// Container for regions (e.g., countries). Should appear
@@ -189,14 +190,14 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			$scope.svgRegions = $scope.svg
 				.group()
 				.attr({id: 'regions'})
-			$scope.layer.append($scope.svgRegions);
+			$scope.zoomArea.append($scope.svgRegions);
 
 			// Container for markers -- SVG icons that appea on a map
 			// and can be moved around
 			$scope.svgMarkers = $scope.svg
 				.group()
 				.attr({id: 'markers'})
-			$scope.layer.append($scope.svgMarkers);
+			$scope.zoomArea.append($scope.svgMarkers);
 
 			/** Draw a region on a map. Region is a static closed path that
 			 *   outlines a specific map area (e.g., country, island etc).
@@ -204,7 +205,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			 *	 code: <unique id>
 			 *	 path: <SVG path specification>
 			 *	 fill: <CSS fill colour specification>
-			 *	 stroke: <stroke (contour) width>
+			 *	 stroke: <stroke width>
 			 * }
 			*/
 			$scope.drawRegion = function(region) {
@@ -225,7 +226,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				svg.attr({
 					'fill': region.fill ||  $scope.config.region.fill || $scope.randomColor(),
 					'stroke': region.stroke || $scope.config.region.stroke,
-					'stroke-width': region.width || $scope.config.region.width
+					'stroke-width': region.strokeWidth || $scope.config.region.strokeWidth
 				})
 			}
             /// }}}
@@ -236,7 +237,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			 *	 code: <unique id>
 			 *	 icon: path to SVG file
 			 *	 fill: <CSS fill colour specification>
-			 *	 stroke: <stroke (contour) width>
+			 *	 stroke: <stroke width>
              *	 animate: {
              *	    destination: [X, Y] // Destination point on a map
              *	    duration: Number, // Duration in milliseconds required to reach the destination point
@@ -271,8 +272,6 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
                         }, item.animate.duration, item.animate.easing, item.animate.callback);
                         item.animate = null;
                     }
-
-					// Some other transformations of the SVG of an icon here
 				}
 			}
 
@@ -419,25 +418,22 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			$scope.setLayerEventCallback('mouseover');
 			// }}}
 
-            $scope.resizeMap = function(width, height) {
-                $scope.map.width = width;
-                $scope.map.height = height;
-                var attr = {
-					height: $scope.map.height,
-					width: $scope.map.width
-				};
-			    $scope.svg.attr(attr);
-                $scope.upscaleMap();
-            }
-
 			$(window).resize(function(e) {
 				$scope.upscaleMap(e);
 			});
 
 			/** Scale map to fit top-level container (horizontal) */
 			$scope.upscaleMap = function(dimension) {
-				var width = $("#canvas").width();
-				var height = $("#canvas").height();
+				var parWidth = $("#canvas").parent().width(),
+				    parHeight = $("#canvas").parent().height();
+
+                var width = parWidth;
+                var height = parWidth/$scope.map.ratio;
+
+                if (parHeight < height) {
+                    height = parHeight;
+                    width = height*$scope.map.ratio;
+                }
 
                 // Kill scale of regions so it is not in the way
                 $scope.svgRegions.attr({transform: ""});
@@ -448,8 +444,15 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 
 				bbox = $scope.svgRegions.getBBox();
 
-				var matrix = $scope.svgRegions.matrix.translate(0, ((height - bbox.height)/2)/scaleFactor);
+				var matrix = $scope.svgRegions.matrix.translate(
+                    ((parWidth - bbox.width)/2)/scaleFactor,
+                    ((parHeight - bbox.height)/2)/scaleFactor
+                );
 				$scope.svgRegions.transform(matrix)
+
+                var attr = _.pick($scope.svgRegions.getBBox(), ['x','y','width','height'])
+                $scope.background.attr(attr);
+                $scope.grid.attr(attr);
 			}
 
 			// Watchers {{{
@@ -462,7 +465,12 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				if (regions.length) {
 					// During initial load: draw each region
 					_.forEach(regions, $scope.drawItem);
-					// Scale map to fit top-level container
+
+                    // Get map width/height ratio
+                    var bbox = $scope.svgRegions.getBBox();
+                    $scope.map.ratio = bbox.width/bbox.height;
+
+                    // Scale map to fit top-level container
 					$scope.upscaleMap();
 					// Unregister previous watch ...
 					unregister();
