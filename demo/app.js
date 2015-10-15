@@ -18,21 +18,13 @@ app.controller('demoController', function($scope, $http, collectionAssistant, $t
 	$http.get('../data/world.json').success(function(data) {
 		// Let's load the world's map ...
 		$scope.mapRegions = data;
+		// Load cities
+		$http.get('../data/cities.json').success(function(data) {
+			_.each(data, function(city) { $scope.mapRegions.push(city); })
+		});
+		// Load markers
+		$http.get('../data/markers.json').success(function(data) {
+			_.each(data, function(marker) { $scope.mapRegions.push(marker); })
+		})
 	});
-
-	// ... and conquer the world!
-	$scope.redInvasion = function(freq) {
-		$timeout(function(){
-			if ($scope.mapRegions.length) {
-				var region = $scope.mapRegions[_.random(0, $scope.mapRegions.length - 1)];
-				if (region.code != 'US' && region.code != 'RU') {
-					var fill = 'red';
-					fill = (region.fill != 'red') ? 'red' : 'blue';
-					region.fill = fill
-				}
-			}
-			$scope.redInvasion(freq);
-		},freq)
-	};
-	//$scope.redInvasion(200);
 });

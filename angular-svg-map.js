@@ -35,9 +35,11 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				// same setting in regions (if provided)
 				region: {
 					stroke: 'black', // colour
-					strokeWidth: 1, // stroke width
+					strokeWidth: 0.8, // stroke width
 					fill: null, // fill colour
-					scale: 1, // scale factor
+					fillOpacity: 0.5, // fill opacity
+					strokeOpacity: 1, // stroke opacity
+					radius: 1 // default radius for circles
 				},
 
 				grid: {
@@ -46,10 +48,10 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				},
 
 				background: { // Styles for map background
-					grid: true, // Draw (or do not draw grid)
-					fill: '#DCDCDC', // Background colour
-                    stroke: 'black', // stroke colour
-					strokeWidth: 1 // stroke width
+					grid: true,			// Draw (or do not draw grid)
+					fill: '#DCDCDC',	// Background colour
+                    stroke: 'black',	// Stroke colour
+					strokeWidth: 1		// Stroke width
 				},
 
 				events: { // Mouse event callbacks
@@ -219,22 +221,35 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			$scope.drawRegion = function(region) {
 				var svg = Snap('#' + region.code);
 				if (!svg) {
-					var path = $scope.svg.path()
-						.attr('d', region.path)
-						.data(region)
+					var element = null;
+					if (region.path) {
+						element = $scope.svg.path()
+							.attr('d', region.path);
+					} else if (region.circle) {
+						element = $scope.svg.circle()
+							.attr({
+								cx: region.circle[0],
+								cy: region.circle[1],
+								r: region.radius || $scope.config.region.radius
+							});
+					}
+
+					element.data(region)
 
 				 	svg = $scope.svg
-						.group(path)
+						.group(element)
 						.attr('id',region.code)
-						.append(path);
+						.append(element);
 
 					$scope.svgRegions.append(svg);
 				}
 
 				svg.attr({
-					'fill': region.fill ||  $scope.config.region.fill || $scope.randomColor(),
-					'stroke': region.stroke || $scope.config.region.stroke,
-					'stroke-width': region.strokeWidth || $scope.config.region.strokeWidth
+					fill: region.fill ||  $scope.config.region.fill || $scope.randomColor(),
+					stroke: region.stroke || $scope.config.region.stroke,
+					strokeWidth: region.strokeWidth || $scope.config.region.strokeWidth,
+					fillOpacity: region.fillOpacity || $scope.config.region.fillOpacity,
+					strokeOpacity: region.strokeOpacity || $scope.config.region.strokeOpacity
 				})
 			}
             /// }}}
