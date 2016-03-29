@@ -19,7 +19,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			'	</defs>' +
 			'</svg>', // }}}
 		controller: function($scope, collectionAssistant) {
-			// Configuration {{{
+			// Parse config {{{
 			if (!$scope.config) $scope.config = {};
 			if (!$scope.regions) $scope.regions = [];
 
@@ -422,36 +422,37 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			);
 			// }}}
 
-			// Clicks {{{
-			$scope.clickCallback = function(ename,e,x,y) {
-				var data = null;
-				var element = Snap(e.target);
-				if (element)
-					data = element.data();
-
-				var callback = $scope.config.events[ename];
-				if (_.isFunction(callback))
-					callback(x,y,data);
-			}
-
-			$scope.setLayerEventCallback = function(ename) {
-				$scope.layer[ename](_.partial($scope.clickCallback,ename));
-			}
-
-			$scope.setLayerEventCallback('click');
-			$scope.setLayerEventCallback('dblclick');
-			$scope.setLayerEventCallback('mouseup');
-			$scope.setLayerEventCallback('mousedown');
-			$scope.setLayerEventCallback('mousemove');
-			$scope.setLayerEventCallback('mouseout');
-			$scope.setLayerEventCallback('mouseover');
+			// Events {{{
+			$scope.layer
+				.click(function(e, x, y) {
+					$scope.$emit('svg-map-click', x, y, Snap(e.target).data());
+				})
+				.dblclick(function(e, x, y) {
+					$scope.$emit('svg-map-dblclick', x, y, Snap(e.target).data());
+				})
+				.mouseup(function(e, x, y) {
+					$scope.$emit('svg-map-mouseup', x, y, Snap(e.target).data());
+				})
+				.mousedown(function(e, x, y) {
+					$scope.$emit('svg-map-mousedown', x, y, Snap(e.target).data());
+				})
+				.mousemove(function(e, x, y) {
+					$scope.$emit('svg-map-mousemove', x, y, Snap(e.target).data());
+				})
+				.mouseout(function(e, x, y) {
+					$scope.$emit('svg-map-mouseout', x, y, Snap(e.target).data());
+				})
+				.mouseover(function(e, x, y) {
+					$scope.$emit('svg-map-mouseover', x, y, Snap(e.target).data());
+				})
 			// }}}
 
+			// Resizing {{{
 			$(window).resize(function(e) {
 				$scope.upscaleMap(e);
 			});
 
-			/** Scale map to fit top-level container (horizontally first) */
+			// Scale map to fit top-level container (horizontally first)
 			$scope.upscaleMap = function(dimension) {
 				// Get dimensions of a parent container
 				var parWidth = $("#canvas").parent().width(),
@@ -487,7 +488,8 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 				// knows where the boundaries are
 				$scope.map.width = bbox.width;
 				$scope.map.height = bbox.height;
-			}
+			};
+			// }}}
 
 			// Watchers {{{
 			var unregister = $scope.$watchCollection('regions', function(regions) {
