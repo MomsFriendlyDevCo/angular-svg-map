@@ -5,6 +5,9 @@ var app = angular.module('app', [
 app.controller('demoController', function($scope, $http, collectionAssistant, $timeout) {
 	$scope.mapRegions = [];
 	$scope.mapConfig = {
+		background: {
+			grid: false,
+		},
 		events: {
 			click: function(x,y,data) {
 				//console.log('Mouse click at position', [x,y], "width data bound:",data);

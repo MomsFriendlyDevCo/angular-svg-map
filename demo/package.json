@@ -1,0 +1,27 @@
+{
+  "name": "angular-svg-map-demo",
+  "version": "0.0.0",
+  "description": "angular-svg-map demo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MomsFriendlyDevCo/angular-svg-map.git"
+  },
+  "keywords": [
+    "angular",
+    "svg",
+    "map"
+  ],
+  "author": "Matt Carter <m@ttcarter.com> (https://github.com/hash-bang)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MomsFriendlyDevCo/angular-svg-map/issues"
+  },
+  "homepage": "https://github.com/MomsFriendlyDevCo/angular-svg-map#readme",
+  "dependencies": {
+    "express": "^4.13.4"
+  }
+}
