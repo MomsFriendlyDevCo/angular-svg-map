@@ -257,7 +257,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			// Markers and regions {{{
 			/** Draw a marker on a map
 			 * {
-			 *	 code: <unique id>
+			 *	 id: <unique id>
 			 *	 icon: path to SVG file
 			 *	 fill: <CSS fill colour specification>
 			 *	 stroke: <stroke width>
@@ -269,33 +269,50 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			 * }
 			*/
 			$scope.drawMarker = function(item) {
-				var svg = Snap('#' + item.code);
+				var svg = Snap('#' + item.id + ' > svg');
+
 				if (!svg) {
+					// Doesn't exist yet - load it and call this func back
 					svg = $scope.svg
 						.group()
 						.attr('id', item.code);
 
-					Snap.load(item.icon, function(xml) {
+					return Snap.load(item.icon, function(xml) {
 						$scope.svgMarkers.append(svg);
-						svg.append(xml);
+						var newItem = svg.append(xml);
+						newItem.attr({id: item.id});
 						$scope.drawMarker(item);
 						svg.drag();
-					})
-				} else {
-					// Enable animation transformations
-					if (item.animate) {
-						var start = [0, 0];
-						if (svg.matrix)
-							start = [svg.matrix.e, svg.matrix.f];
-
-						Snap.animate(start, item.animate.destination, function (coord) {
-							svg.attr({
-								transform: d3transform().translate(coord[0], coord[1])()
-							})
-						}, item.animate.duration, item.animate.easing, item.animate.callback);
-						item.animate = null;
-					}
+					});
 				}
+
+				// Change an an existing SVG sprites properties
+				if (item.x && item.y)
+					svg.attr({
+						x: item.x,
+						y: item.y,
+					});
+
+				// Enable animation transformations
+				if (item.animate) {
+					var start = [item.x, item.y];
+					if (svg.matrix)
+						start = [svg.matrix.e, svg.matrix.f];
+
+					console.log('ANIM', start, item.animate.destination);
+
+					Snap.animate(start, item.animate.destination, function (coord) {
+						console.log('ANIMATE', coord[0], coord[1]);
+						svg.attr({
+							x: coord[0],
+							y: coord[1],
+						})
+					}, item.animate.duration, mina[item.animate.easing], function() {
+						console.log('DONE MOVING!');
+					});
+					item.animate = null;
+				}
+				
 			}
 
 			/** Draw a svg representation of a region or a marker */

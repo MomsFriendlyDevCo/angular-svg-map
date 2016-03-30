@@ -8,18 +8,14 @@ app.controller('demoController', function($scope, $http, collectionAssistant, $t
 		background: {
 			grid: false,
 		},
-		events: {
-			click: function(x,y,data) {
-				//console.log('Mouse click at position', [x,y], "width data bound:",data);
-			},
-			dblclick: function(x,y,data) {
-				//console.log('Double click at position', [x,y]);
-			},
-		},
 	};
 
 	$scope.$on('svg-map-click', function(e, x, y, data) {
 		console.log('Click on map at', x, y, 'with data', data);
+	});
+
+	$scope.$on('svg-map-mousemove', function(e, x, y, data) {
+		// console.log('Move over', x, y);
 	});
 
 	$http.get('../data/world.json').success(function(data) {

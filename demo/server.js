@@ -21,6 +21,7 @@ app.use(express.static(__dirname));
 
 app.use('/bower_components', express.static(__dirname + '/../bower_components'));
 app.use('/data', express.static(__dirname + '/../data'));
+app.use('/markers', express.static(__dirname + '/../markers'));
 
 app.get('/angular-svg-map.js', function(req, res) {
 	res.sendFile('angular-svg-map.js', {root: __dirname + '/..'});

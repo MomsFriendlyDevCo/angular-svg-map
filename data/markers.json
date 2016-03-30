@@ -1,9 +1,14 @@
 [
 	{
-		"code": "plane",
-		"icon": "../markers/marker.svg",
+		"id": "plane-nyc-lon",
+		"icon": "../markers/plane.svg",
 		"name": "Plane",
-		"x": 0,
-		"y": 0
+		"x": 514,
+		"y": 250,
+		"animate": {
+			"destination": [778, 206],
+			"duration": 5000,
+			"easing": "linear"
+		}
 	}
 ]
