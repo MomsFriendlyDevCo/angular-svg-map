@@ -16,7 +16,7 @@ app.controller('demoController', function($scope, $http, collectionAssistant, $t
 	});
 
 	$scope.$on('svg-map-mousemove', function(e, x, y, data) {
-		console.log('Move over', x, y);
+		// console.log('Move over', x, y);
 	});
 
 

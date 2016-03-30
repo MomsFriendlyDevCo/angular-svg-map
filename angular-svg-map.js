@@ -63,7 +63,11 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 					mousemove: null,
 					mouseout: null,
 					mouseover: null,
-				}
+				},
+
+				markers: {
+					dateParsing: ['HHmm', 'YYYY-MM-DD HH:mm'],
+				},
 			};
 
 			// Settings that should not be overridden by user configuration
@@ -295,21 +299,33 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 						y: item.y,
 					});
 				} else if (item.positions) {
-					debugger;
-					var previousPosition;
-					var currentPosition;
+					var previousPosition, nextPosition;
 					item.positions.some(function(position) {
-						if (moment(position.at).isAfter(moment())) {
-							currentPosition = position;
+						if (moment(position.at, $scope.config.markers.dateParsing).isAfter(moment())) {
+							nextPosition = position;
 							return true;
 						} else {
 							previousPosition = position;
 						}
 					});
-					if (!currentPosition) {
+					if (!nextPosition) {
 						console.log('FIXME: Outside boundries of marker!');
 					} else {
-						console.log('MARKER BETWEEN', previousPosition, currentPosition);
+						var startEpoc = moment(previousPosition.at, $scope.config.markers.dateParsing).unix();
+						var endEpoc = moment(nextPosition.at, $scope.config.markers.dateParsing).unix();;
+						var percentAlong = startEpoc / endEpoc;
+
+						svg.attr({
+							x: Math.floor(previousPosition.x + ((nextPosition.x - previousPosition.x) * percentAlong)),
+							y: Math.floor(previousPosition.y + ((nextPosition.y - previousPosition.y) * percentAlong)),
+						});
+
+						if (previousPosition.r) {
+							var matrix = new Snap.Matrix(1,0,0,1,100,100);
+							var bbox = svg.getBBox();
+							matrix.rotate(previousPosition.r, bbox.cx, bbox.cy);
+							svg.attr('transform', matrix);
+						}
 					}
 				} else if (item.animate) { // Legacy animation transformations
 					var start = [item.x, item.y];
