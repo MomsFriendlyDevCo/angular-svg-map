@@ -1,14 +1,20 @@
 [
 	{
-		"id": "plane-nyc-lon",
+		"id": "plane-nyc-lon-syd-bra-la",
 		"icon": "../markers/plane.svg",
 		"name": "Plane",
-		"x": 514,
-		"y": 250,
-		"animate": {
-			"destination": [778, 206],
-			"duration": 5000,
-			"easing": "linear"
-		}
+		"positions": [
+			{"at": "0900", "x": 514, "y": 250},
+			{"at": "1000", "x": 778, "y": 206},
+			{"at": "1100", "x": 1336, "y": 546},
+			{"at": "1200", "x": 594, "y": 467},
+			{"at": "1300", "x": 338, "y": 273}
+		]
+	},
+	{
+		"id": "simple-marker",
+		"icon": "../markers/marker.svg",
+		"x": 1128,
+		"y": 157
 	}
 ]

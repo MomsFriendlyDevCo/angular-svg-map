@@ -2,8 +2,9 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 .directive('svgMap', function() {
 	return {
 		scope: {
-			regions: '=', // Array or regions (see $scope.drawRegion for details of region structure)
-			config: '='   // Configuration settings object (see $scope.defaults for details)
+			config: '=', // Configuration settings object (see $scope.defaults for details)
+			regions: '=', // Array of regions (see $scope.drawRegion)
+			markers: '=', // Array of markers (see $scope.drawMaker)
 		},
 		restrict: 'AE',
 		template: // {{{
@@ -208,15 +209,17 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			$scope.svgMarkers = $scope.layer
 				.group()
 				.attr({id: 'markers'})
+			// }}}
 
+			// .drawRegion() {{{
 			/** Draw a region on a map. Region is a static closed path that
-			 *   outlines a specific map area (e.g., country, island etc).
-			 * {
-			 *	 code: <unique id>
-			 *	 path: <SVG path specification>
-			 *	 fill: <CSS fill colour specification>
-			 *	 stroke: <stroke width>
-			 * }
+			*   outlines a specific map area (e.g., country, island etc).
+			* {
+			*	 code: <unique id>
+			*	 path: <SVG path specification>
+			*	 fill: <CSS fill colour specification>
+			*	 stroke: <stroke width>
+			* }
 			*/
 			$scope.drawRegion = function(region) {
 				var svg = Snap('#' + region.code);
@@ -254,7 +257,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			}
 			/// }}}
 
-			// Markers and regions {{{
+			// .drawMarker() {{{
 			/** Draw a marker on a map
 			 * {
 			 *	 id: <unique id>
@@ -282,44 +285,47 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 						var newItem = svg.append(xml);
 						newItem.attr({id: item.id});
 						$scope.drawMarker(item);
-						svg.drag();
 					});
 				}
 
-				// Change an an existing SVG sprites properties
-				if (item.x && item.y)
+				// Simple X, Y position
+				if (item.x && item.y) {
 					svg.attr({
 						x: item.x,
 						y: item.y,
 					});
-
-				// Enable animation transformations
-				if (item.animate) {
+				} else if (item.positions) {
+					debugger;
+					var previousPosition;
+					var currentPosition;
+					item.positions.some(function(position) {
+						if (moment(position.at).isAfter(moment())) {
+							currentPosition = position;
+							return true;
+						} else {
+							previousPosition = position;
+						}
+					});
+					if (!currentPosition) {
+						console.log('FIXME: Outside boundries of marker!');
+					} else {
+						console.log('MARKER BETWEEN', previousPosition, currentPosition);
+					}
+				} else if (item.animate) { // Legacy animation transformations
 					var start = [item.x, item.y];
 					if (svg.matrix)
 						start = [svg.matrix.e, svg.matrix.f];
 
-					console.log('ANIM', start, item.animate.destination);
-
 					Snap.animate(start, item.animate.destination, function (coord) {
-						console.log('ANIMATE', coord[0], coord[1]);
 						svg.attr({
 							x: coord[0],
 							y: coord[1],
 						})
-					}, item.animate.duration, mina[item.animate.easing], function() {
-						console.log('DONE MOVING!');
-					});
+					}, item.animate.duration, mina[item.animate.easing]);
 					item.animate = null;
 				}
 				
-			}
-
-			/** Draw a svg representation of a region or a marker */
-			$scope.drawItem = function(item) {
-				var func = (item.icon) ? $scope.drawMarker : $scope.drawRegion;
-				func(item);
-			}
+			};
 			// }}}
 
 			// Zoom {{{
@@ -509,36 +515,53 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			// }}}
 
 			// Watchers {{{
-			var unregister = $scope.$watchCollection('regions', function(regions) {
+			var regionsUnwatch = $scope.$watchCollection('regions', function(regions) {
 				// Assume that the initial load of regions is atomic (well, ish)
 				// Also, assume that regions come as an array of paths, that is,
 				// draw will be synchronous, otherwise draw need to return some notion
 				// of draw being completed. This is required to "upscale" the map
 				// to fit the top-level container
-				if (regions.length) {
-					// During initial load: draw each region
-					_.forEach(regions, $scope.drawItem);
+				if (!regions || !regions.length) return false;
 
-					// Get map width/height ratio
-					var bbox = $scope.svgRegions.getBBox();
-					$scope.map.ratio = bbox.width/bbox.height;
+				// During initial load: draw each region
+				_.forEach(regions, $scope.drawRegion);
 
-					// Scale map to fit top-level container
-					$scope.upscaleMap();
-					// Unregister previous watch ...
-					unregister();
+				// Get map width/height ratio
+				var bbox = $scope.svgRegions.getBBox();
+				$scope.map.ratio = bbox.width/bbox.height;
 
-					// ... and set up deep watch of all elements of $scope.regions
-					$scope.$watch('regions', function(newV, oldV) {
-						collectionAssistant(newV, oldV)
-							.indexBy('code')
-							.deepComparison()
-							.on('new', $scope.drawItem)
-							.on('deleted', $scope.drawItem)
-							.on('update', $scope.drawItem);
-					}, true)
-				}
+				// Scale map to fit top-level container
+				$scope.upscaleMap();
+				// Unregister previous watch ...
+				regionsUnwatch();
+
+				// ... and set up deep watch of all elements of $scope.regions
+				$scope.$watch('regions', function(newV, oldV) {
+					collectionAssistant(newV, oldV)
+						.indexBy('code')
+						.deepComparison()
+						.on('new', $scope.drawRegion)
+						.on('deleted', $scope.drawRegion)
+						.on('update', $scope.drawRegion);
+				}, true)
 			})
+
+			var markersUnwatch = $scope.$watchCollection('markers', function(markers) {
+				if (!markers || !markers.length) return;
+
+				_.forEach(markers, $scope.drawMarker);
+
+				markersUnwatch();
+
+				$scope.$watch('markers', function(newV, oldV) {
+					collectionAssistant(newV, oldV)
+						.indexBy('id')
+						.deepComparison()
+						.on('new', $scope.drawMarker)
+						.on('deleted', $scope.drawMarker)
+						.on('update', $scope.drawMarker);
+				}, true)
+			});
 			// }}}
 		}
 	}
