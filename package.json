@@ -1,0 +1,32 @@
+{
+  "name": "angular-svg-map",
+  "version": "0.0.0",
+  "description": "Angular SVG world maps",
+  "main": "angular-svg-map.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MomsFriendlyDevCo/angular-svg-map.git"
+  },
+  "keywords": [
+    "angular",
+    "svg",
+    "world",
+    "map",
+    "maps",
+    "ui"
+  ],
+  "author": "Matt Carter <m@ttcarter.com> (https://github.com/hash-bang)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MomsFriendlyDevCo/angular-svg-map/issues"
+  },
+  "homepage": "https://github.com/MomsFriendlyDevCo/angular-svg-map#readme",
+  "dependencies": {
+    "angular": "^1.5.3",
+    "angular-collection-assistant": "^1.1.4",
+    "jquery": "^2.2.3",
+    "lodash": "^4.10.0",
+    "moment": "^2.12.0",
+    "snapsvg": "^0.4.0"
+  }
+}
