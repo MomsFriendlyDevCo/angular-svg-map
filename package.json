@@ -1,6 +1,6 @@
 {
   "name": "angular-svg-map",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Angular SVG world maps",
   "main": "angular-svg-map.js",
   "repository": {

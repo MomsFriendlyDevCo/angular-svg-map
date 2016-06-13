@@ -282,7 +282,16 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 					// Doesn't exist yet - load it and call this func back
 					svg = $scope.svg
 						.group()
-						.attr('id', item.code);
+						.attr('id', item.code)
+						.click(function() {
+							$scope.$emit('svg-map-marker-click', item, svg);
+						})
+						.mouseover(function() {
+							$scope.$emit('svg-map-marker-mouseover', item, svg);
+						})
+						.mouseout(function() {
+							$scope.$emit('svg-map-marker-mouseout', item, svg);
+						})
 
 					return Snap.load(item.icon, function(xml) {
 						$scope.svgMarkers.append(svg);
@@ -345,7 +354,7 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			// }}}
 
 			// Zoom {{{
-			// Scale at a givent coordinate
+			// Scale at a given coordinate
 			$scope.scale = function(point, factor, element) {
 				// If matrix is undefined (element is not transformed)
 				// create a matrix with no transformations
