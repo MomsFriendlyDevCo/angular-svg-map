@@ -276,6 +276,8 @@ angular.module('angular-svg-map', ['ng-collection-assistant'])
 			 * }
 			*/
 			$scope.drawMarker = function(item) {
+				if (!item) return console.log('Rejecting falsy marker:', item);
+				if (!item.id) return console.warn('Rejecting marker as it has no ID:', item);
 				var svg = Snap('#' + item.id + ' > svg');
 
 				if (!svg) {
